@@ -7,12 +7,13 @@
 // Access is actually controlled by your Firestore Security Rules
 // (see README.md).
 // ============================================================
-
-export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDfw_Jmxii7aCDyWDhRoktuIX2sH9J6es8",
+  authDomain: "to-do-app-b23e4.firebaseapp.com",
+  projectId: "to-do-app-b23e4",
+  storageBucket: "to-do-app-b23e4.firebasestorage.app",
+  messagingSenderId: "409421344668",
+  appId: "1:409421344668:web:e766009b880b1ec12e6259",
+  measurementId: "G-WNMXXY5DJC"
 };
