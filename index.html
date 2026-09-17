@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Task Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-title">
+      <h1>Task Log</h1>
+      <p>Assign it, work it, submit it.</p>
+    </div>
+    <div class="stats" id="stats">
+      <div class="stat">
+        <span class="stat-num" id="stat-total">0</span>
+        <span class="stat-label">total</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="stat-pending">0</span>
+        <span class="stat-label">pending</span>
+      </div>
+      <div class="stat stat-overdue">
+        <span class="stat-num" id="stat-overdue">0</span>
+        <span class="stat-label">overdue</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="composer">
+      <h2>New task</h2>
+      <form id="task-form">
+        <label for="title">Title</label>
+        <input type="text" id="title" placeholder="e.g. Submit expense report" required />
+
+        <label for="description">Description <span class="optional">(optional)</span></label>
+        <textarea id="description" rows="3" placeholder="Any extra detail"></textarea>
+
+        <div class="field-row">
+          <div>
+            <label for="assigned-date">Assigned</label>
+            <input type="date" id="assigned-date" required />
+          </div>
+          <div>
+            <label for="deadline-date">Deadline</label>
+            <input type="date" id="deadline-date" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Add task</button>
+        <p class="form-error" id="form-error"></p>
+      </form>
+
+      <div class="connection-note" id="connection-note"></div>
+    </aside>
+
+    <main class="log">
+      <nav class="filters" id="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="assigned">Assigned</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="completed">Completed</button>
+        <button class="filter-btn" data-filter="submitted">Submitted</button>
+        <button class="filter-btn" data-filter="cancelled">Not submitting</button>
+        <button class="filter-btn" data-filter="overdue">Overdue</button>
+      </nav>
+
+      <div class="task-list" id="task-list">
+        <p class="empty-state" id="empty-state">Loading your tasks…</p>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Firebase (modular SDK via CDN, loaded as ES modules) -->
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

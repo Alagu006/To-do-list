@@ -1,0 +1,322 @@
+:root {
+  --paper: #EEF1F0;
+  --panel: #FFFFFF;
+  --ink: #1B2A3A;
+  --ink-soft: #55636F;
+  --line: #D8DEDC;
+  --accent: #2F6F62;
+  --accent-soft: #E4EDE9;
+
+  --assigned: #8A94A6;
+  --pending: #C97A2B;
+  --completed: #3D74C9;
+  --submitted: #2F8F5B;
+  --cancelled: #9C6B54;
+  --overdue: #C23B22;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1, h2 {
+  font-family: 'Fraunces', serif;
+  margin: 0;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 32px clamp(20px, 5vw, 56px) 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar-title h1 {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.topbar-title p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+.stats {
+  display: flex;
+  gap: 28px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.stat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.stat-overdue .stat-num { color: var(--overdue); }
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  align-items: start;
+}
+
+@media (max-width: 780px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* ---------- Composer ---------- */
+
+.composer {
+  padding: 28px clamp(20px, 3vw, 32px);
+  border-right: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 780px) {
+  .composer { position: static; border-right: none; border-bottom: 1px solid var(--line); }
+}
+
+.composer h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.composer label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 14px 0 6px;
+}
+
+.composer label .optional { font-style: italic; }
+
+.composer input,
+.composer textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.composer input:focus,
+.composer textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-primary {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover { background: #285a4f; }
+
+.form-error {
+  color: var(--overdue);
+  font-size: 13px;
+  margin: 10px 0 0;
+  min-height: 1em;
+}
+
+.connection-note {
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.connection-note.error { color: var(--overdue); }
+
+/* ---------- Log / filters ---------- */
+
+.log {
+  padding: 28px clamp(20px, 3vw, 32px);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.filter-btn:hover { border-color: var(--accent); }
+
+.filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.empty-state {
+  color: var(--ink-soft);
+  padding: 30px 0;
+}
+
+/* ---------- Task rows ---------- */
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-row {
+  display: flex;
+  gap: 14px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--line);
+  border-left: 4px solid var(--assigned);
+  padding-left: 14px;
+}
+
+.task-row[data-status="pending"] { border-left-color: var(--pending); }
+.task-row[data-status="completed"] { border-left-color: var(--completed); }
+.task-row[data-status="submitted"] { border-left-color: var(--submitted); }
+.task-row[data-status="cancelled"] { border-left-color: var(--cancelled); }
+.task-row[data-overdue="true"] { border-left-color: var(--overdue); }
+
+.task-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.task-title.is-cancelled { text-decoration: line-through; color: var(--ink-soft); }
+
+.task-desc {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  margin: 4px 0 0;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.chip-assigned { background: var(--assigned); }
+.chip-pending { background: var(--pending); }
+.chip-completed { background: var(--completed); }
+.chip-submitted { background: var(--submitted); }
+.chip-cancelled { background: var(--cancelled); }
+
+.chip-overdue {
+  background: transparent;
+  color: var(--overdue);
+  border: 1px solid var(--overdue);
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.status-select {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.remove-btn:hover { color: var(--overdue); }
+
+@media (max-width: 480px) {
+  .task-row { flex-direction: column; }
+  .task-actions { flex-direction: row; align-items: center; }
+}
