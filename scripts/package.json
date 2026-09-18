@@ -1,0 +1,14 @@
+{
+  "name": "task-log-deadline-check",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Scheduled script that checks Firestore for due/overdue tasks and sends web push notifications.",
+  "main": "check-deadlines.js",
+  "dependencies": {
+    "firebase-admin": "^14.0.0",
+    "web-push": "^3.6.7"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}
