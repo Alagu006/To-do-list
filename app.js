@@ -1,4 +1,5 @@
 import { firebaseConfig } from "./firebase-config.js";
+import { VAPID_PUBLIC_KEY } from "./push-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
@@ -7,6 +8,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
   onSnapshot,
   query,
   orderBy
@@ -53,12 +55,20 @@ const statTotal = document.getElementById("stat-total");
 const statPending = document.getElementById("stat-pending");
 const statOverdue = document.getElementById("stat-overdue");
 
+const notifyBtn = document.getElementById("notify-btn");
+const notifyStatus = document.getElementById("notify-status");
+
 // ---------- Helpers ----------
 
 function todayISO() {
+  // Build the local calendar date directly instead of going through
+  // toISOString(), which converts to UTC and can silently return
+  // yesterday's date for timezones ahead of UTC (e.g. UTC+5:30, UTC+8).
   const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function isOverdue(task) {
@@ -67,7 +77,7 @@ function isOverdue(task) {
 }
 
 function formatDate(iso) {
-  if (!iso) return "";
+  if (!iso || typeof iso !== "string" || !iso.includes("-")) return String(iso || "");
   const [y, m, d] = iso.split("-");
   return `${m}/${d}/${y}`;
 }
@@ -100,8 +110,14 @@ function render() {
 
   visible
     .slice()
-    .sort((a, b) => a.deadline.localeCompare(b.deadline))
-    .forEach(task => taskList.appendChild(renderRow(task)));
+    .sort((a, b) => String(a.deadline).localeCompare(String(b.deadline)))
+    .forEach(task => {
+      try {
+        taskList.appendChild(renderRow(task));
+      } catch (err) {
+        console.warn("Skipped a task that couldn't be rendered:", task.id, err);
+      }
+    });
 }
 
 function renderRow(task) {
@@ -173,6 +189,111 @@ function renderRow(task) {
 
   row.appendChild(actions);
   return row;
+}
+
+// ---------- Push notifications ----------
+// Real background push: a service worker + a subscription saved to Firestore.
+// The actual "check deadlines and send" work happens server-side, on a
+// schedule, in the GitHub Actions workflow — see README.md Part 2. This
+// section only handles registering for push and storing the subscription.
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function sha256Hex(text) {
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(hashBuffer)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function saveSubscription(subscription) {
+  const docId = await sha256Hex(subscription.endpoint);
+  await setDoc(doc(db, "subscriptions", docId), {
+    subscription: subscription.toJSON(),
+    updatedAt: Date.now()
+  });
+}
+
+async function removeSubscriptionDoc(subscription) {
+  const docId = await sha256Hex(subscription.endpoint);
+  await deleteDoc(doc(db, "subscriptions", docId)).catch(() => {});
+}
+
+async function updateNotifyUI() {
+  if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+    notifyBtn.disabled = true;
+    notifyStatus.textContent = "Push notifications aren't supported in this browser.";
+    return;
+  }
+
+  if (Notification.permission === "denied") {
+    notifyBtn.disabled = true;
+    notifyStatus.textContent = "Notifications are blocked for this site in your browser settings.";
+    return;
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  const existing = await registration.pushManager.getSubscription();
+
+  if (existing) {
+    notifyBtn.textContent = "Disable deadline notifications";
+    notifyStatus.textContent = "You'll be notified when a task is due today or overdue.";
+  } else {
+    notifyBtn.textContent = "Enable deadline notifications";
+    notifyStatus.textContent = "";
+  }
+}
+
+async function toggleNotifications() {
+  if (!tasksCol) {
+    notifyStatus.textContent = "Firebase isn't configured yet.";
+    return;
+  }
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith("PASTE_")) {
+    notifyStatus.textContent = "push-config.js still has a placeholder VAPID key — see README.md Part 2.";
+    return;
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  const existing = await registration.pushManager.getSubscription();
+
+  try {
+    if (existing) {
+      await removeSubscriptionDoc(existing);
+      await existing.unsubscribe();
+      notifyStatus.textContent = "Notifications disabled.";
+    } else {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        notifyStatus.textContent = "Permission wasn't granted, so notifications stay off.";
+        return;
+      }
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      await saveSubscription(subscription);
+    }
+  } catch (err) {
+    notifyStatus.textContent = "Couldn't update notifications: " + err.message;
+  }
+
+  updateNotifyUI();
+}
+
+async function initPush() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await navigator.serviceWorker.register("./sw.js");
+    notifyBtn.addEventListener("click", toggleNotifications);
+    updateNotifyUI();
+  } catch (err) {
+    notifyStatus.textContent = "Service worker registration failed: " + err.message;
+  }
 }
 
 // ---------- Firestore operations ----------
@@ -261,3 +382,4 @@ filtersNav.addEventListener("click", e => {
 
 document.getElementById("assigned-date").value = todayISO();
 subscribeToTasks();
+initPush();

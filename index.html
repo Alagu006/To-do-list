@@ -63,6 +63,11 @@
       </form>
 
       <div class="connection-note" id="connection-note"></div>
+
+      <div class="notify-block">
+        <button type="button" class="btn-secondary" id="notify-btn">Enable deadline notifications</button>
+        <p class="notify-status" id="notify-status"></p>
+      </div>
     </aside>
 
     <main class="log">
@@ -85,6 +90,7 @@
 
   <!-- Firebase (modular SDK via CDN, loaded as ES modules) -->
   <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="push-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
