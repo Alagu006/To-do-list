@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: scripts
-        run: npm ci
+        run: npm install
 
       - name: Run deadline check
         working-directory: scripts
