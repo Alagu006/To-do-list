@@ -260,12 +260,13 @@ async function toggleNotifications() {
 
   const registration = await navigator.serviceWorker.ready;
   const existing = await registration.pushManager.getSubscription();
+  let statusOverride = null;
 
   try {
     if (existing) {
       await removeSubscriptionDoc(existing);
       await existing.unsubscribe();
-      notifyStatus.textContent = "Notifications disabled.";
+      statusOverride = "Notifications disabled.";
     } else {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
@@ -276,13 +277,25 @@ async function toggleNotifications() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-      await saveSubscription(subscription);
+
+      try {
+        await saveSubscription(subscription);
+        statusOverride = "You'll be notified when a task is due today or overdue.";
+      } catch (saveErr) {
+        // The browser-level subscription succeeded but saving it to
+        // Firestore didn't — roll back so we don't end up "subscribed"
+        // locally with no record the server can ever find or send to.
+        await subscription.unsubscribe().catch(() => {});
+        throw new Error("Couldn't save your subscription to Firestore: " + saveErr.message);
+      }
     }
   } catch (err) {
     notifyStatus.textContent = "Couldn't update notifications: " + err.message;
+    return; // don't let updateNotifyUI() below overwrite this real error
   }
 
-  updateNotifyUI();
+  await updateNotifyUI();
+  if (statusOverride) notifyStatus.textContent = statusOverride;
 }
 
 async function initPush() {
@@ -383,3 +396,4 @@ filtersNav.addEventListener("click", e => {
 document.getElementById("assigned-date").value = todayISO();
 subscribeToTasks();
 initPush();
+
