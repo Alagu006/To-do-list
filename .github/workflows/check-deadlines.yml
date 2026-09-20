@@ -17,9 +17,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install dependencies
+      - name: Install dependencies (fresh, ignoring any stale lockfile)
         working-directory: scripts
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: Run deadline check
         working-directory: scripts
