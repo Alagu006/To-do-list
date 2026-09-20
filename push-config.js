@@ -7,4 +7,3 @@
 // ============================================================
 
 export const VAPID_PUBLIC_KEY = "BO6IEKl5NUYnCvAj-Qy-E0S3KgKjw1KqrKvxlMSvkMDefkroVQFFFzbwrDc1iLXKPIPKD1s97h2I7AP4zNAuOhY";
-export const VAPID_PRIVATE_KEY = "hoNLsZhG_8gcKWSVDuOSD5xTPihDZnPuB7PLyU0MNnE";
