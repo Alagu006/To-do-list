@@ -1,0 +1,31 @@
+name: Check task deadlines
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # every hour, on the hour, UTC
+  workflow_dispatch: {}    # lets you run it manually from the Actions tab to test
+
+jobs:
+  check-deadlines:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm ci
+
+      - name: Run deadline check
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: "mailto:you@example.com"
+        run: node check-deadlines.js
