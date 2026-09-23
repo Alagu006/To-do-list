@@ -36,12 +36,20 @@ webpush.setVapidDetails(
   VAPID_PRIVATE_KEY
 );
 
-// Note: this runs on GitHub's servers in UTC. "Today" here is the UTC
-// calendar date, which may be a few hours offset from your local date.
-// For an hourly check on a personal task list this is a reasonable
-// tradeoff; it is not perfectly timezone-exact.
+// "Today" is computed in Asia/Kolkata (IST) specifically, rather than the
+// GitHub runner's UTC clock, so the due/overdue boundary lines up with
+// your actual calendar day instead of being off by several hours.
+const NOTIFY_TIMEZONE = "Asia/Kolkata";
+
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: NOTIFY_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const get = type => parts.find(p => p.type === type).value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 async function getSubscriptions() {
@@ -66,6 +74,12 @@ async function sendToAll(subs, payload) {
   );
 }
 
+function daysBetween(fromISO, toISO) {
+  const a = new Date(fromISO + "T00:00:00Z");
+  const b = new Date(toISO + "T00:00:00Z");
+  return Math.round((b - a) / 86400000);
+}
+
 async function main() {
   const today = todayISO();
   const [tasksSnap, subs] = await Promise.all([db.collection("tasks").get(), getSubscriptions()]);
@@ -82,26 +96,33 @@ async function main() {
 
     const isDueToday = task.deadline === today;
     const isOverdue = task.deadline < today;
+    if (!isDueToday && !isOverdue) continue; // not due yet
 
-    if (isDueToday && task.notifiedDueDate !== today) {
+    // One notification per task per calendar day, but repeats every day
+    // it remains unresolved (not just once ever) — this is the fix for
+    // "it notified once but never again the next day while overdue."
+    if (task.lastNotifiedDate === today) continue;
+
+    if (isDueToday) {
       await sendToAll(subs, {
         title: "Task due today",
         body: task.title,
         tag: `due-${docSnap.id}`,
         url: "./"
       });
-      await docSnap.ref.update({ notifiedDueDate: today });
       console.log("Notified (due today):", task.title);
-    } else if (isOverdue && !task.notifiedOverdue) {
+    } else {
+      const daysOverdue = daysBetween(task.deadline, today);
       await sendToAll(subs, {
-        title: "Task overdue",
+        title: `Task overdue (${daysOverdue} day${daysOverdue === 1 ? "" : "s"})`,
         body: task.title,
         tag: `overdue-${docSnap.id}`,
         url: "./"
       });
-      await docSnap.ref.update({ notifiedOverdue: true });
-      console.log("Notified (overdue):", task.title);
+      console.log(`Notified (overdue, ${daysOverdue}d):`, task.title);
     }
+
+    await docSnap.ref.update({ lastNotifiedDate: today });
   }
 }
 
