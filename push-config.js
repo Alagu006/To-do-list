@@ -6,4 +6,4 @@
 // your GitHub Actions secret (see README.md, Part 2).
 // ============================================================
 
-export const VAPID_PUBLIC_KEY = "BO6IEKl5NUYnCvAj-Qy-E0S3KgKjw1KqrKvxlMSvkMDefkroVQFFFzbwrDc1iLXKPIPKD1s97h2I7AP4zNAuOhY";
+export const VAPID_PUBLIC_KEY = "BNEY5zW_JUuPfKpEY2_tNRvhgiCe6tAAllNwXB10qQFjdqwWOXu2TH-mlPxz07mI34bjvqng5GMW3Yn1ovhudxM";
